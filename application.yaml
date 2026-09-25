@@ -1,0 +1,30 @@
+server:
+  port: 8081 # default value: 8080
+
+ontology:
+  file: "C:/Users/user/Food_Diet_ALL.owl"
+
+reasoner:
+  konclude:
+    owllinkserver: http://localhost:8080
+    # Folder of the Konclude distribution. Konclude is started on startup and shut down on exit.
+    # If Konclude is not directly in this folder, "Konclude*" folders up to 3 levels below it are searched.
+    folder: "${user.home}/Downloads"
+    # Number of Konclude processing threads; AUTO uses all cores.
+    workers: AUTO
+    # If true, Konclude is not shut down on exit. Konclude keeps its knowledge bases and their classification, so the
+    # next start reuses them instead of classifying the (unchanged) ontology again. Useful during development.
+    keep-running: true
+
+
+logging:
+  level:
+    root: info
+    org.springframework: warn
+    o.s.s.web: warn
+    org.apache: warn
+  file:
+    path: "log"
+
+ui:
+  theme: light

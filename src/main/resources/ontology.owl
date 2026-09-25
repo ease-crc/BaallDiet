@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://example.com/ontology#"
+     xml:base="http://example.com/ontology"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+
+    <owl:Ontology rdf:about="http://example.com/ontology"/>
+
+    <owl:Class rdf:about="http://example.com/ontology#ThingOfInterest"/>
+
+    <owl:Class rdf:about="http://example.com/ontology#Animal">
+        <rdfs:subClassOf rdf:resource="http://example.com/ontology#ThingOfInterest"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://example.com/ontology#Plant">
+        <rdfs:subClassOf rdf:resource="http://example.com/ontology#ThingOfInterest"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://example.com/ontology#Dog">
+        <rdfs:subClassOf rdf:resource="http://example.com/ontology#Animal"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://example.com/ontology#Cat">
+        <rdfs:subClassOf rdf:resource="http://example.com/ontology#Animal"/>
+    </owl:Class>
+
+    <owl:Class rdf:about="http://example.com/ontology#Tree">
+        <rdfs:subClassOf rdf:resource="http://example.com/ontology#Plant"/>
+    </owl:Class>
+
+</rdf:RDF>
