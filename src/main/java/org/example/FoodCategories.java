@@ -13,16 +13,14 @@ import java.util.function.Supplier;
 
 /**
  * The three categories of the foods of a {@link DietUser}, as they are shown in a {@link CategoryForest}: the
- * permitted, the favorite and the forbidden foods.
+ * permitted and the forbidden foods.
  */
 final class FoodCategories {
 
 	static final int PERMITTED = 0;
-	static final int FAVORITE = 1;
-	static final int FORBIDDEN = 2;
+	static final int FORBIDDEN = 1;
 
 	static final Color PERMITTED_TINT = new Color(46, 160, 67, 70);
-	static final Color FAVORITE_TINT = new Color(240, 180, 40, 90);
 	static final Color FORBIDDEN_TINT = new Color(220, 53, 69, 70);
 
 	private FoodCategories() {
@@ -34,8 +32,8 @@ final class FoodCategories {
 	 * @param leadingButtons
 	 * 		Additional toolbar buttons, in front of the buttons to move and remove foods
 	 *
-	 * @return A forest with a root for the permitted, the favorite and the forbidden foods. A forbidden food is neither
-	 * permitted nor favorite, but a food can be both permitted and favorite.
+	 * @return A forest with a root for the permitted and the forbidden foods. A food is not both permitted and
+	 * forbidden.
 	 */
 	static CategoryForest<OWLClass> createForest(
 			final Supplier<CheckBoxTreeNode<OWLClass>> taxonomy,
@@ -55,13 +53,6 @@ final class FoodCategories {
 								"Any food, as long as it is not forbidden"
 						),
 						new CategoryForest.Category(
-								"Favorite foods",
-								new ToolbarIcons.StarIcon(),
-								"Make the selected foods and the foods below them favorites",
-								FAVORITE_TINT,
-								"Any food, as long as it is not forbidden"
-						),
-						new CategoryForest.Category(
 								"Forbidden foods",
 								new ToolbarIcons.BanIcon(),
 								"Forbid the selected foods and the foods below them",
@@ -69,7 +60,7 @@ final class FoodCategories {
 								"No food is forbidden"
 						)
 				),
-				(a, b) -> a != b && (a == FORBIDDEN || b == FORBIDDEN),
+				(a, b) -> a != b,
 				leadingButtons
 		);
 	}
@@ -78,7 +69,7 @@ final class FoodCategories {
 	 * Shows the foods of the user in the forest, without notifying the change callback of the forest.
 	 */
 	static void show(final CategoryForest<OWLClass> forest, final DietUser user) {
-		forest.setItems(List.of(user.permitted(), user.favorites(), user.forbidden()));
+		forest.setItems(List.of(user.permitted(), user.forbidden()));
 	}
 
 	/**
@@ -88,7 +79,6 @@ final class FoodCategories {
 		return new DietUser(
 				name,
 				forest.getItems(PERMITTED),
-				forest.getItems(FAVORITE),
 				forest.getItems(FORBIDDEN)
 		);
 	}

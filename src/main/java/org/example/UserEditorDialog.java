@@ -63,11 +63,7 @@ final class UserEditorDialog extends JDialog {
 		foods = FoodCategories.createForest(() -> classRoot, renderClass);
 		foods.setOnChanged(classTree::refreshHighlights);
 
-		// a forbidden food is neither permitted nor favorite; a food can be both permitted and favorite
 		classTree.setHighlightProvider(value -> {
-			if (foods.contains(FoodCategories.FAVORITE, value)) {
-				return FoodCategories.FAVORITE_TINT;
-			}
 			if (foods.contains(FoodCategories.PERMITTED, value)) {
 				return FoodCategories.PERMITTED_TINT;
 			}
@@ -79,8 +75,6 @@ final class UserEditorDialog extends JDialog {
 		classTree.setOnActivate(value -> foods.addItems(FoodCategories.PERMITTED, List.of(value)));
 		classTree.addToolbarButton(ToolbarIcons.createToolbarButton(
 				new ToolbarIcons.CheckIcon(), "Permit selected class", () -> addSelected(FoodCategories.PERMITTED)));
-		classTree.addToolbarButton(ToolbarIcons.createToolbarButton(
-				new ToolbarIcons.StarIcon(), "Make selected class a favorite", () -> addSelected(FoodCategories.FAVORITE)));
 		classTree.addToolbarButton(ToolbarIcons.createToolbarButton(
 				new ToolbarIcons.BanIcon(), "Forbid selected class", () -> addSelected(FoodCategories.FORBIDDEN)));
 		ClassTransfer.installDragSource(classTree);
@@ -105,13 +99,13 @@ final class UserEditorDialog extends JDialog {
 		ToolbarIcons.styleSplitPane(splitPane);
 
 		JLabel help = ToolbarIcons.createHelpIcon(
-				"Select a class in the tree, then permit, favorite or forbid it, or drag it onto the roots on the right"
+				"Select a class in the tree, then permit or forbid it, or drag it onto the roots on the right"
 						+ " (double-click permits it). Drag the foods on the right between the roots to move them; hold Ctrl to"
 						+ " copy them. Foods keep the structure of the taxonomy below each root, and moving or removing a food"
-						+ " includes the foods below it. The user wants the foods that are permitted and favorite, minus the"
-						+ " forbidden foods; an empty permitted or favorite root does not restrict the foods. Foods processed only"
-						+ " from permitted (favorite) foods are permitted (favorite), too; foods processed from forbidden foods are"
-						+ " forbidden, too. A forbidden class is neither permitted nor favorite."
+						+ " includes the foods below it. The user may eat the permitted foods, minus the"
+						+ " forbidden foods; an empty permitted root does not restrict the foods. Foods processed only"
+						+ " from permitted foods are permitted, too; foods processed from forbidden foods are"
+						+ " forbidden, too. A forbidden class is not permitted."
 		);
 
 		JButton ok = new JButton(user == null ? "Add user" : "Save");

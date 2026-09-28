@@ -395,7 +395,7 @@ public final class ToolbarIcons {
     }
 
     /**
-     * A five-pointed star outline, used for "favorite" actions.
+     * A five-pointed star outline, used for "favourite" actions.
      */
     public static class StarIcon extends AbstractToolbarIcon {
 

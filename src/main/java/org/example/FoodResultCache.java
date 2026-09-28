@@ -55,7 +55,7 @@ final class FoodResultCache {
 	enum Kind {
 		/**
 		 * The foods that are permitted for a set of classes: the classes, their subclasses, and the foods that are
-		 * processed only from those. Favorite foods are closed the same way and use this kind, too.
+		 * processed only from those.
 		 */
 		PERMITTED,
 		/**

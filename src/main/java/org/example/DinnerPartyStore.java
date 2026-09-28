@@ -1,5 +1,6 @@
 package org.example;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -49,7 +50,8 @@ final class DinnerPartyStore {
 	/**
 	 * The JSON representation of a {@link DietUser}.
 	 */
-	public record JsonUser(String name, List<String> permitted, List<String> favorites, List<String> forbidden) {
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public record JsonUser(String name, List<String> permitted, List<String> forbidden) {
 	}
 
 	private final Path file;
@@ -99,7 +101,6 @@ final class DinnerPartyStore {
 				users.add(new DietUser(
 						user.name(),
 						toClasses(user.permitted()),
-						toClasses(user.favorites()),
 						toClasses(user.forbidden())
 				));
 			}
@@ -125,7 +126,6 @@ final class DinnerPartyStore {
 						.map(u -> new JsonUser(
 								u.name(),
 								toIris(u.permitted()),
-								toIris(u.favorites()),
 								toIris(u.forbidden())
 						))
 						.toList(),
@@ -145,21 +145,16 @@ final class DinnerPartyStore {
 	}
 
 	/**
-	 * @return Four example guests, whose dinner party has few foods (with the ontology this was written for: apple,
-	 * basmati rice, cherry tomato, olive oil, potato and tomato). Classes that the ontology does not have are left
-	 * out.
+	 * @return Five example guests with different diets and allergies. Classes that the ontology does not have
+	 * are left out.
 	 */
 	List<DietUser> exampleGuests() {
 		return List.of(
-				new DietUser("Anna (vegan, nut allergy)", food("Vegan_Food"), food(), food("NutOrSeed")),
-				new DietUser("Ben (halal)", food("Rigid_Halal_Food"), food(), food()),
-				new DietUser("Dana (kosher)", food("Rigid_Kosher_Food"), food(), food()),
-				new DietUser(
-						"Chris (vegetarian, no onions)",
-						food("Vegetarian_Food"),
-						food("Tomato", "Potato", "OliveOil", "BasmatiRice", "Egg", "Cheese", "Apple", "Shallot"),
-						food("Onion")
-				)
+				new DietUser("Ali (halal)", food("Rigid_Halal_Food"), food()),
+				new DietUser("Bernd (no pet)", food(), food("AnyPet_as_Food")),
+				new DietUser("Dana (kosher)", food("Rigid_Kosher_Food"), food()),
+				new DietUser("John (ovo-lacto-pescetarian)", food("OvoLactoPescetarian_Food"), food()),
+				new DietUser("Nancy (pure; nut allergy)", food("PureFood"), food("NutOrSeed"))
 		);
 	}
 

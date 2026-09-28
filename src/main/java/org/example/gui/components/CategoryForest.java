@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 
 /**
  * A forest with one root for each category, holding the values the user assigned to that category, e.g., the
- * permitted, favorite and forbidden foods of a guest.
+ * permitted and forbidden foods of a guest.
  * <p>
  * Below each root, the values keep the structure of a taxonomy: a value is shown below its nearest ancestor in the
  * taxonomy that is in the same category. Values are moved between categories by drag and drop (hold Ctrl to copy) or

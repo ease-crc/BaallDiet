@@ -73,7 +73,7 @@ final class DinnerPartyPanel extends JPanel {
 	private final JPanel detailsCards = new JPanel(detailsCardLayout);
 
 	/**
-	 * The permitted, favorite and forbidden foods of the currently selected user. Constructed in the constructor, since it
+	 * The permitted and forbidden foods of the currently selected user. Constructed in the constructor, since it
 	 * needs {@code renderClass}, which is only available there (a field initializer runs before the constructor body
 	 * assigns it).
 	 */
@@ -129,7 +129,7 @@ final class DinnerPartyPanel extends JPanel {
 		guestSummary.setForeground(UIManager.getColor("Label.disabledForeground"));
 
 		JButton examplesButton = new JButton("Add example guests");
-		examplesButton.setToolTipText("Adds a vegan, a halal and a kosher guest and a guest with favorite foods.");
+		examplesButton.setToolTipText("Adds a halal, a kosher, an ovo-lacto-pescetarian and a pure-food guest (with a nut allergy) and a guest without pet food.");
 		examplesButton.addActionListener(e -> addExampleGuests());
 
 		JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
@@ -418,11 +418,11 @@ final class DinnerPartyPanel extends JPanel {
 		}
 
 		private static String describe(DietUser user) {
-			if (user.permitted().isEmpty() && user.favorites().isEmpty()) {
+			if (user.permitted().isEmpty()) {
 				return "all foods permitted, " + user.forbidden().size() + " forbidden";
 			}
 
-			return count(user.permitted()) + " permitted, " + count(user.favorites()) + " favorite, "
+			return count(user.permitted()) + " permitted, "
 					+ user.forbidden().size() + " forbidden";
 		}
 

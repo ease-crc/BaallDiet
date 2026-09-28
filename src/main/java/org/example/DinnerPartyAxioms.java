@@ -14,15 +14,13 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Builds the axioms that define the permitted, favorite and forbidden foods of {@link DietUser}s.
+ * Builds the axioms that define the permitted and forbidden foods of {@link DietUser}s.
  * <p>
  * For each user {@code U}:
  * <ul>
  *     <li>{@code U_Permitted_Food ≡ ∃processed_from.U_Permitted_Food ⊓ ∀processed_from.U_Permitted_Food}, and each
  *     permitted class is a subclass of it, i.e., foods processed only from permitted foods are permitted (the same
  *     closure as the selection method). Without permitted classes, all foods are permitted.</li>
- *     <li>The same for the favorite classes with {@code U_Favorite_Food}. The user wants the foods that are permitted
- *     <em>and</em> favorite; without favorite classes, all foods are favorite.</li>
  *     <li>Each forbidden class is a subclass of {@code U_Forbidden_Food}, and
  *     {@code ∃processed_from.U_Forbidden_Food ⊑ U_Forbidden_Food}, i.e., foods processed from forbidden foods are
  *     forbidden, too.</li>
@@ -31,7 +29,7 @@ import java.util.Set;
  * </ul>
  * Deliberately, there is no axiom {@code U_Food ≡ U_Permitted_Food ⊓ ¬U_Forbidden_Food}: as the ontology rarely states
  * disjointness, the reasoner could almost never prove that a food is not forbidden. Instead, the foods of a user are
- * the common subclasses of {@code U_Permitted_Food} and {@code U_Favorite_Food} that are not subclasses of
+ * the subclasses of {@code U_Permitted_Food} that are not subclasses of
  * {@code U_Forbidden_Food}, i.e., foods are excluded if they are provably forbidden (see {@link DinnerPartyPlanner}).
  */
 final class DinnerPartyAxioms {
@@ -44,16 +42,14 @@ final class DinnerPartyAxioms {
 	private static final String USERS_NS = "http://ontologies.baall.de/FOOD_Users#";
 
 	/**
-	 * The classes of the permitted, favorite and forbidden foods of a user.
+	 * The classes of the permitted and forbidden foods of a user.
 	 *
 	 * @param permitted
 	 * 		The class whose subclasses are the permitted foods, if the user restricts the permitted foods
-	 * @param favorite
-	 * 		The class whose subclasses are the favorite foods, if the user has favorite foods
 	 * @param forbidden
 	 * 		The class whose subclasses are the forbidden foods, if the user forbids any foods
 	 */
-	record UserClasses(Optional<OWLClass> permitted, Optional<OWLClass> favorite, Optional<OWLClass> forbidden) {
+	record UserClasses(Optional<OWLClass> permitted, Optional<OWLClass> forbidden) {
 	}
 
 	/**
@@ -89,11 +85,9 @@ final class DinnerPartyAxioms {
 
 		final Optional<OWLClass> permitted = addClosure(
 				prefix + "_Permitted_Food", user.permitted(), processedFrom, df, permittedBy, diet);
-		final Optional<OWLClass> favorite = addClosure(
-				prefix + "_Favorite_Food", user.favorites(), processedFrom, df, null, diet);
 
 		if (user.forbidden().isEmpty()) {
-			return new UserClasses(permitted, favorite, Optional.empty());
+			return new UserClasses(permitted, Optional.empty());
 		}
 
 		final OWLClass forbidden = newClass(prefix + "_Forbidden_Food", df);
@@ -101,7 +95,7 @@ final class DinnerPartyAxioms {
 		axioms.add(df.getOWLSubClassOfAxiom(df.getOWLObjectSomeValuesFrom(processedFrom, forbidden), forbidden));
 		axioms.add(df.getOWLSubClassOfAxiom(forbidden, df.getOWLObjectSomeValuesFrom(forbiddenBy, diet)));
 
-		return new UserClasses(permitted, favorite, Optional.of(forbidden));
+		return new UserClasses(permitted, Optional.of(forbidden));
 	}
 
 	/**

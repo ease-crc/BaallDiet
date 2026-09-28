@@ -9,32 +9,28 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 /**
- * Computes the foods that all users of a dinner party may eat: for each user, the foods that are permitted and favorite
+ * Computes the foods that all users of a dinner party may eat: for each user, the foods that are permitted
  * without those that are provably forbidden (see {@link DinnerPartyAxioms}), intersected over all users.
  * <p>
- * The foods of a class set are looked up in a {@link FoodResultCache} first. Only if there are users with classes that
- * are not cached for the current axioms of the ontology, a Konclude knowledge base is created (with the axioms of only
- * these users) and classified.
+ * The foods of users are not cached: a Konclude knowledge base is created with the axioms of all users and classified
+ * on every call.
  */
 final class DinnerPartyPlanner {
 
 	/**
-	 * The steps reported by {@link #computeFoods}. The middle steps are skipped if all foods are cached.
+	 * The steps reported by {@link #computeFoods}.
 	 */
 	static final List<String> STEP_LABELS = List.of(
-			"Looking up known foods",
 			"Creating knowledge base",
 			"Classifying ontology",
-			"Querying foods of new users"
+			"Querying foods of users"
 	);
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DinnerPartyPlanner.class);
@@ -54,125 +50,13 @@ final class DinnerPartyPlanner {
 			final List<DietUser> users,
 			final OWLOntology ontology,
 			final KoncludeManager koncludeManager,
-			final FoodResultCache cache,
 			final IntConsumer stepListener
 	) {
-		stepListener.accept(0);
-
-		final List<DietUser> unknown = users.stream().filter(u -> !isCached(u, cache)).toList();
-
 		LOGGER.info(
-				"Computing dinner party foods for {}; {} of {} users are not cached.",
-				users.stream().map(DietUser::name).collect(Collectors.joining(", ")),
-				unknown.size(),
-				users.size()
+				"Computing dinner party foods for {}.",
+				users.stream().map(DietUser::name).collect(Collectors.joining(", "))
 		);
 
-		if (!unknown.isEmpty()) {
-			computeAndCache(unknown, ontology, koncludeManager, cache, stepListener);
-		}
-
-		Set<OWLClass> partyFoods = null;
-
-		for (final DietUser user : users) {
-			final Set<OWLClass> foods = foodsOf(user, cache);
-
-			if (partyFoods == null) {
-				partyFoods = foods;
-			} else {
-				partyFoods.retainAll(foods);
-			}
-		}
-
-		LOGGER.info("The dinner party may eat {} foods.", partyFoods.size());
-
-		return partyFoods;
-	}
-
-	/**
-	 * A part of the foods of a user that is looked up or cached on its own.
-	 *
-	 * @param kind
-	 * 		The kind of foods
-	 * @param classes
-	 * 		The classes the foods are computed for
-	 */
-	private record Part(FoodResultCache.Kind kind, List<OWLClass> classes) {
-
-		Optional<Set<OWLClass>> cached(final FoodResultCache cache) {
-			return cache.get(kind, classes);
-		}
-	}
-
-	/**
-	 * @return The parts whose intersection are the foods that are permitted and favorite, i.e., one part for each of
-	 * the permitted and the favorite classes that the user has, or all foods if there are none
-	 */
-	private static List<Part> allowedParts(final DietUser user) {
-		final List<Part> parts = new ArrayList<>();
-
-		if (!user.permitted().isEmpty()) {
-			parts.add(new Part(FoodResultCache.Kind.PERMITTED, user.permitted()));
-		}
-
-		// favorite foods are closed like permitted foods, so they share the cache entries
-		if (!user.favorites().isEmpty()) {
-			parts.add(new Part(FoodResultCache.Kind.PERMITTED, user.favorites()));
-		}
-
-		if (parts.isEmpty()) {
-			parts.add(new Part(FoodResultCache.Kind.ALL, List.of()));
-		}
-
-		return parts;
-	}
-
-	private static Optional<Part> forbiddenPart(final DietUser user) {
-		return user.forbidden().isEmpty()
-		       ? Optional.empty()
-		       : Optional.of(new Part(FoodResultCache.Kind.FORBIDDEN, user.forbidden()));
-	}
-
-	private static boolean isCached(final DietUser user, final FoodResultCache cache) {
-		return allowedParts(user).stream().allMatch(part -> part.cached(cache).isPresent())
-				&& forbiddenPart(user).map(part -> part.cached(cache).isPresent()).orElse(true);
-	}
-
-	/**
-	 * @return The foods of the user from the cache, where all of them must be cached
-	 */
-	private static Set<OWLClass> foodsOf(final DietUser user, final FoodResultCache cache) {
-		Set<OWLClass> foods = null;
-
-		for (final Part part : allowedParts(user)) {
-			final Set<OWLClass> partFoods = part.cached(cache).orElseThrow();
-
-			if (foods == null) {
-				foods = new LinkedHashSet<>(partFoods);
-			} else {
-				foods.retainAll(partFoods);
-			}
-		}
-
-		final Optional<Part> forbidden = forbiddenPart(user);
-
-		if (forbidden.isPresent()) {
-			foods.removeAll(forbidden.get().cached(cache).orElseThrow());
-		}
-
-		return foods;
-	}
-
-	/**
-	 * Classifies the ontology with the axioms of the given users and caches their permitted and forbidden foods.
-	 */
-	private static void computeAndCache(
-			final List<DietUser> users,
-			final OWLOntology ontology,
-			final KoncludeManager koncludeManager,
-			final FoodResultCache cache,
-			final IntConsumer stepListener
-	) {
 		final OWLDataFactory df = ontology.getOWLOntologyManager().getOWLDataFactory();
 		final OWLClass food = df.getOWLClass(IRI.create(DinnerPartyAxioms.FOOD_NS + "Food"));
 		final DinnerPartyAxioms partyAxioms = new DinnerPartyAxioms(
@@ -181,51 +65,83 @@ final class DinnerPartyPlanner {
 				df
 		);
 
-		LOGGER.info(
-				"Adding {} additional axioms for {}.",
-				partyAxioms.getAxioms().size(),
-				users.stream().map(DietUser::name).collect(Collectors.joining(", "))
-		);
+		LOGGER.info("Adding {} additional axioms.", partyAxioms.getAxioms().size());
 
-		stepListener.accept(1);
+		stepListener.accept(0);
 		final OWLReasoner reasoner = koncludeManager.createUnmanagedReasoner(ontology, partyAxioms.getAxioms());
+		Set<OWLClass> partyFoods = null;
 
 		try {
-			stepListener.accept(2);
+			stepListener.accept(1);
 			reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
 
-			stepListener.accept(3);
+			stepListener.accept(2);
 
 			for (final DietUser user : users) {
-				final DinnerPartyAxioms.UserClasses classes = partyAxioms.getUserClasses(user);
+				final UserFoods userFoods = foodsOf(reasoner, food, partyAxioms.getUserClasses(user), partyAxioms);
+				final Set<OWLClass> foods = new LinkedHashSet<>(userFoods.total());
 
-				if (classes.permitted().isEmpty() && classes.favorite().isEmpty()) {
-					cache.put(FoodResultCache.Kind.ALL, List.of(), subClasses(reasoner, food, partyAxioms));
+				LOGGER.info(
+						"{} may eat {} foods in total ({} positive, {} negative).",
+						user.name(),
+						userFoods.total().size(),
+						userFoods.positive().size(),
+						userFoods.negative().size()
+				);
+				LOGGER.info("{} positive foods: {}", user.name(), names(userFoods.positive()));
+				LOGGER.info("{} negative foods: {}", user.name(), names(userFoods.negative()));
+				LOGGER.info("{} total foods: {}", user.name(), names(userFoods.total()));
+
+				if (partyFoods == null) {
+					partyFoods = foods;
+				} else {
+					partyFoods.retainAll(foods);
 				}
 
-				classes.permitted().ifPresent(c -> cache.put(
-						FoodResultCache.Kind.PERMITTED,
-						user.permitted(),
-						subClasses(reasoner, c, partyAxioms)
-				));
-				classes.favorite().ifPresent(c -> cache.put(
-						FoodResultCache.Kind.PERMITTED,
-						user.favorites(),
-						subClasses(reasoner, c, partyAxioms)
-				));
-				classes.forbidden().ifPresent(c -> cache.put(
-						FoodResultCache.Kind.FORBIDDEN,
-						user.forbidden(),
-						subClasses(reasoner, c, partyAxioms)
-				));
-
-				LOGGER.info("Computed the foods of {}.", user.name());
 			}
-
-			cache.save();
 		} finally {
 			reasoner.dispose();
 		}
+
+		LOGGER.info("The dinner party may eat {} foods.", partyFoods.size());
+
+		return partyFoods;
+	}
+
+	/**
+	 * The foods of a user.
+	 *
+	 * @param positive
+	 * 		The permitted foods, i.e., all foods if the user does not restrict them
+	 * @param negative
+	 * 		The provably forbidden foods
+	 * @param total
+	 * 		The foods that are permitted and not forbidden
+	 */
+	private record UserFoods(Set<OWLClass> positive, Set<OWLClass> negative, Set<OWLClass> total) {
+	}
+
+	private static UserFoods foodsOf(
+			final OWLReasoner reasoner,
+			final OWLClass food,
+			final DinnerPartyAxioms.UserClasses classes,
+			final DinnerPartyAxioms partyAxioms
+	) {
+		final Set<OWLClass> positive = subClasses(reasoner, classes.permitted().orElse(food), partyAxioms);
+		final Set<OWLClass> negative = classes.forbidden()
+				.map(c -> subClasses(reasoner, c, partyAxioms))
+				.orElseGet(LinkedHashSet::new);
+		final Set<OWLClass> total = new LinkedHashSet<>(positive);
+		total.removeAll(negative);
+
+		return new UserFoods(positive, negative, total);
+	}
+
+	private static String names(final Set<OWLClass> classes) {
+		return classes.stream()
+				.map(c -> c.getIRI().getShortForm())
+				.sorted()
+				.collect(Collectors.joining(", ", "[", "]"));
 	}
 
 	/**

@@ -710,7 +710,7 @@ public class MainFrame extends JFrame {
         ).setSelected(true);
         addTitleBarTab(
                 TAB_DINNER_PARTY,
-                "Manage users with permitted, favorite and forbidden foods, choose who attends the dinner party, and"
+                "Manage users with permitted and forbidden foods, choose who attends the dinner party, and"
                         + " compute the foods everyone attending may eat.",
                 1,
                 tabGroup,
@@ -953,7 +953,7 @@ public class MainFrame extends JFrame {
                 "Dinner party foods",
                 "Computing foods for " + guests.stream().map(DietUser::name).collect(Collectors.joining(", ")),
                 DinnerPartyPlanner.STEP_LABELS,
-                stepListener -> DinnerPartyPlanner.computeFoods(guests, ontology, koncludeManager, foodCache, stepListener)
+                stepListener -> DinnerPartyPlanner.computeFoods(guests, ontology, koncludeManager, stepListener)
                         .stream()
                         .sorted(Comparator.comparing(this::renderClass))
                         .toList(),
